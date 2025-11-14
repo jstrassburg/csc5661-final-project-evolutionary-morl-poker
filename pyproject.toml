@@ -5,10 +5,12 @@ description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.14"
 dependencies = [
+    "black>=25.11.0",
     "deap>=1.4.3",
     "ipykernel>=7.1.0",
     "matplotlib>=3.10.7",
     "nbconvert>=7.16.6",
+    "numpy>=2.3.4",
     "pokerkit>=0.6.4",
     "tqdm>=4.67.1",
 ]
