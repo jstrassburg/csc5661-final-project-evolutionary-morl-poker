@@ -24,3 +24,7 @@ Sometimes we also consider:
 
 - Understand evolutionary reinforcement learning
 - Understand multi-objective reinforcement learning
+
+## Scope
+
+This project will limit its scope to the game of Fixed Limit Texas Hold'em.
