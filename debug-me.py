@@ -239,12 +239,16 @@ class FixedLimitTexasHoldemEnvironment:
         hand = parse_range(
             "".join([f"{str(card.rank)}{str(card.suit)}" for card in hole_cards])
         )
+        board_cards_flat = (
+            [card[0] for card in self._state.board_cards]
+            if self._state.board_cards
+            else []
+        )
+        players_still_in = sum(1 for status in self._state.statuses if status)
         return self._pokers_equity_calculator.calculate_strength(
             hand=hand,
-            board=(
-                self._state.board_cards[0] if len(self._state.board_cards) > 0 else []
-            ),
-            players_left_in_hand=len(self._state.actor_indices),
+            board=board_cards_flat,
+            players_left_in_hand=players_still_in,
             sample_count=1000,
         )
 
@@ -276,13 +280,14 @@ class FixedLimitTexasHoldemEnvironment:
 
         next_to_act = self._state.actor_indices[0]
         hand_strength = self._calculate_hand_strength()
+        players_still_in = sum(1 for status in self._state.statuses if status)
         return ObservableState(
             hand=self._state.hole_cards[next_to_act],
             board=self._state.board_cards,
             can_fold=self._state.can_fold(),
             can_check_or_call=self._state.can_check_or_call(),
             can_complete_bet_or_raise_to=self._state.can_complete_bet_or_raise_to(),
-            players_left_in_hand=len(self._state.actor_indices),
+            players_left_in_hand=players_still_in,
             hand_strength=hand_strength,
             pot_size=self._state.total_pot_amount,
             checking_or_calling_amount=self._state.checking_or_calling_amount,
@@ -346,15 +351,14 @@ class FixedLimitTexasHoldemEnvironment:
             self._state.actor_indices[0] if self._state.actor_indices else None
         )
         hand_strength = self._calculate_hand_strength() if not done else 0.0
+        players_still_in = sum(1 for status in self._state.statuses if status)
         observation = ObservableState(
             hand=self._state.hole_cards[next_to_act] if not done else [],
             board=self._state.board_cards if not done else [],
             can_fold=self._state.can_fold(),
             can_check_or_call=self._state.can_check_or_call(),
             can_complete_bet_or_raise_to=self._state.can_complete_bet_or_raise_to(),
-            players_left_in_hand=(
-                len(self._state.actor_indices) if self._state.actor_indices else 0
-            ),
+            players_left_in_hand=players_still_in,
             hand_strength=hand_strength,
             pot_size=self._state.total_pot_amount,
             checking_or_calling_amount=self._state.checking_or_calling_amount,
