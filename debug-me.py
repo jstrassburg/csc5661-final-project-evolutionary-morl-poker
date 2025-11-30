@@ -817,9 +817,15 @@ class EvolutionaryPokerAgent(PokerAgent):
         return W, b
 
     @staticmethod
-    def softmax(logits: np.ndarray) -> np.ndarray:
+    def softmax(logits: np.ndarray, mask: np.ndarray) -> np.ndarray:
         # Claude 4.5: tab-complete after typing the method signature
-        exp_logits = np.exp(logits - np.max(logits))  # for numerical stability
+
+        # This masks off actions that aren't available
+        masked_logits = np.where(mask, logits, -np.inf)
+
+        # Take a softmax over the available actions
+        max_logit = np.max(masked_logits)
+        exp_logits = np.exp(masked_logits - max_logit)
         return exp_logits / exp_logits.sum(axis=0)
 
 
@@ -835,7 +841,18 @@ class AgentEvolutionarySingleObjective(EvolutionaryPokerAgent):
         W, b = self.decode_theta(θ)
         φ = self.encode_observation_vector(observation)
         logits = W @ φ + b
-        action_probs = self.softmax(logits)
+
+        # Create a mask for available actions
+        mask = np.array(
+            [
+                observation.can_fold,
+                observation.can_check_or_call,
+                observation.can_complete_bet_or_raise_to,
+            ],
+            dtype=bool,
+        )
+
+        action_probs = self.softmax(logits, mask=mask)
         action_index = np.random.choice(range(len(action_probs)), p=action_probs)
         action = ActionType(action_index)
         if (
