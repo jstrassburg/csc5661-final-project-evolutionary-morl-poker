@@ -2,7 +2,7 @@ import copy
 import random
 from abc import ABC, abstractmethod
 from collections.abc import Iterable
-from concurrent.futures import ProcessPoolExecutor
+from concurrent.futures import ThreadPoolExecutor
 from enum import Enum
 from multiprocessing import Pool
 
@@ -132,7 +132,10 @@ class PokerEquityCalculator:
     """
 
     def __init__(self) -> None:
-        self._executor = ProcessPoolExecutor()
+        # Reason: Use ThreadPoolExecutor instead of ProcessPoolExecutor to avoid
+        # "daemonic processes are not allowed to have children" error when used
+        # within DEAP's multiprocessing pool
+        self._executor = ThreadPoolExecutor()
         self._hand_strength_cache = {}
 
     def calculate_strength(
