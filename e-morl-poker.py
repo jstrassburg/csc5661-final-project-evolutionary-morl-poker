@@ -22,6 +22,13 @@ from pokerkit import (
 )
 from tqdm import tqdm
 
+_global_envs_and_players = None
+
+
+def _init_worker(envs_and_players: list[tuple]) -> None:
+    global _global_envs_and_players
+    _global_envs_and_players = envs_and_players
+
 
 class ActionType(Enum):
     FOLD = 0
@@ -871,7 +878,6 @@ class AgentEvolutionaryMultiObjective(EvolutionaryPokerAgent):
         return action
 
 
-
 def fitness_multi_objective(
     θ: np.ndarray,
 ) -> tuple[float]:
@@ -886,21 +892,14 @@ def fitness_multi_objective(
     Returns:
         tuple[float]: The average profits from each environment as fitness.
     """
+    global _global_envs_and_players
     num_hands = 100
     # A reward for each environment:
     # (gp, tag, lag, tp, lp)
     total_reward = np.zeros(5)
 
-    envs_and_players = [
-        (multi_objective_gp_env, players_gp),
-        (multi_objective_tag_env, players_tag),
-        (multi_objective_lag_env, players_lag),
-        (multi_objective_tp_env, players_tp),
-        (multi_objective_lp_env, players_lp),
-    ]
-
     for _ in tqdm(range(num_hands), desc="Evaluating fitness..."):
-        for i, (env, players) in enumerate(envs_and_players):
+        for i, (env, players) in enumerate(_global_envs_and_players):
             rewards = play_one_hand_of_poker(
                 env=env,
                 players=players,
@@ -915,7 +914,9 @@ def fitness_multi_objective(
 def main():
     starting_stack = int(1e12)
     player_0_gp = PokerPlayer(
-        poker_agent=AgentEvolutionaryMultiObjective(), player_index=0, stack=starting_stack
+        poker_agent=AgentEvolutionaryMultiObjective(),
+        player_index=0,
+        stack=starting_stack,
     )
     player_1_gp = PokerPlayer(
         poker_agent=AgentTightAggressive(), player_index=1, stack=starting_stack
@@ -934,7 +935,9 @@ def main():
     multi_objective_gp_env = FixedLimitTexasHoldemEnvironment(players=players_gp)
 
     player_0_tag = PokerPlayer(
-        poker_agent=AgentEvolutionaryMultiObjective(), player_index=0, stack=starting_stack
+        poker_agent=AgentEvolutionaryMultiObjective(),
+        player_index=0,
+        stack=starting_stack,
     )
     player_1_tag = PokerPlayer(
         poker_agent=AgentTightAggressive(), player_index=1, stack=starting_stack
@@ -944,7 +947,9 @@ def main():
     multi_objective_tag_env = FixedLimitTexasHoldemEnvironment(players=players_tag)
 
     player_0_lag = PokerPlayer(
-        poker_agent=AgentEvolutionaryMultiObjective(), player_index=0, stack=starting_stack
+        poker_agent=AgentEvolutionaryMultiObjective(),
+        player_index=0,
+        stack=starting_stack,
     )
     player_1_lag = PokerPlayer(
         poker_agent=AgentLooseAggressive(), player_index=1, stack=starting_stack
@@ -954,7 +959,9 @@ def main():
     multi_objective_lag_env = FixedLimitTexasHoldemEnvironment(players=players_lag)
 
     player_0_tp = PokerPlayer(
-        poker_agent=AgentEvolutionaryMultiObjective(), player_index=0, stack=starting_stack
+        poker_agent=AgentEvolutionaryMultiObjective(),
+        player_index=0,
+        stack=starting_stack,
     )
     player_1_tp = PokerPlayer(
         poker_agent=AgentTightPassive(), player_index=1, stack=starting_stack
@@ -964,7 +971,9 @@ def main():
     multi_objective_tp_env = FixedLimitTexasHoldemEnvironment(players=players_tp)
 
     player_0_lp = PokerPlayer(
-        poker_agent=AgentEvolutionaryMultiObjective(), player_index=0, stack=starting_stack
+        poker_agent=AgentEvolutionaryMultiObjective(),
+        player_index=0,
+        stack=starting_stack,
     )
     player_1_lp = PokerPlayer(
         poker_agent=AgentLoosePassive(), player_index=1, stack=starting_stack
@@ -972,6 +981,14 @@ def main():
 
     players_lp = [player_0_lp, player_1_lp]
     multi_objective_lp_env = FixedLimitTexasHoldemEnvironment(players=players_lp)
+
+    envs_and_players = [
+        (multi_objective_gp_env, players_gp),
+        (multi_objective_tag_env, players_tag),
+        (multi_objective_lag_env, players_lag),
+        (multi_objective_tp_env, players_tp),
+        (multi_objective_lp_env, players_lp),
+    ]
 
     # ## Configure Evolutionary Algorithm for Multi-Objective Learning
 
@@ -1023,10 +1040,10 @@ def main():
     toolbox.register("select", tools.selNSGA2)
 
     # use multiprocessing - doesn't work in notebooks
-    pool = Pool()
+    pool = Pool(initializer=_init_worker, initargs=(envs_and_players,))
     toolbox.register("map", pool.map)
 
-    POPULATION_SIZE = 4. # 100
+    POPULATION_SIZE = 4.0  # 100
     NUM_GENERATIONS = 5  # 50
     CROSSOVER_PROBABILITY = 0.50
     MUTATION_PROBABILITY = 0.3
