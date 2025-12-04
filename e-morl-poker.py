@@ -25,9 +25,91 @@ from tqdm import tqdm
 _global_envs_and_players = None
 
 
-def _init_worker(envs_and_players: list[tuple]) -> None:
+def _create_evaluation_environments(starting_stack: int):
+    """Factory function to create fresh environments for fitness evaluation."""
+    # Reason: Create fresh environments in each worker to avoid pickle issues
+    player_0_gp = PokerPlayer(
+        poker_agent=AgentEvolutionaryMultiObjective(),
+        player_index=0,
+        stack=starting_stack,
+    )
+    player_1_gp = PokerPlayer(
+        poker_agent=AgentTightAggressive(), player_index=1, stack=starting_stack
+    )
+    player_2_gp = PokerPlayer(
+        poker_agent=AgentLooseAggressive(), player_index=2, stack=starting_stack
+    )
+    player_3_gp = PokerPlayer(
+        poker_agent=AgentTightPassive(), player_index=3, stack=starting_stack
+    )
+    player_4_gp = PokerPlayer(
+        poker_agent=AgentLoosePassive(), player_index=4, stack=starting_stack
+    )
+
+    players_gp = [player_0_gp, player_1_gp, player_2_gp, player_3_gp, player_4_gp]
+    multi_objective_gp_env = FixedLimitTexasHoldemEnvironment(players=players_gp)
+
+    player_0_tag = PokerPlayer(
+        poker_agent=AgentEvolutionaryMultiObjective(),
+        player_index=0,
+        stack=starting_stack,
+    )
+    player_1_tag = PokerPlayer(
+        poker_agent=AgentTightAggressive(), player_index=1, stack=starting_stack
+    )
+
+    players_tag = [player_0_tag, player_1_tag]
+    multi_objective_tag_env = FixedLimitTexasHoldemEnvironment(players=players_tag)
+
+    player_0_lag = PokerPlayer(
+        poker_agent=AgentEvolutionaryMultiObjective(),
+        player_index=0,
+        stack=starting_stack,
+    )
+    player_1_lag = PokerPlayer(
+        poker_agent=AgentLooseAggressive(), player_index=1, stack=starting_stack
+    )
+
+    players_lag = [player_0_lag, player_1_lag]
+    multi_objective_lag_env = FixedLimitTexasHoldemEnvironment(players=players_lag)
+
+    player_0_tp = PokerPlayer(
+        poker_agent=AgentEvolutionaryMultiObjective(),
+        player_index=0,
+        stack=starting_stack,
+    )
+    player_1_tp = PokerPlayer(
+        poker_agent=AgentTightPassive(), player_index=1, stack=starting_stack
+    )
+
+    players_tp = [player_0_tp, player_1_tp]
+    multi_objective_tp_env = FixedLimitTexasHoldemEnvironment(players=players_tp)
+
+    player_0_lp = PokerPlayer(
+        poker_agent=AgentEvolutionaryMultiObjective(),
+        player_index=0,
+        stack=starting_stack,
+    )
+    player_1_lp = PokerPlayer(
+        poker_agent=AgentLoosePassive(), player_index=1, stack=starting_stack
+    )
+
+    players_lp = [player_0_lp, player_1_lp]
+    multi_objective_lp_env = FixedLimitTexasHoldemEnvironment(players=players_lp)
+
+    return [
+        (multi_objective_gp_env, players_gp),
+        (multi_objective_tag_env, players_tag),
+        (multi_objective_lag_env, players_lag),
+        (multi_objective_tp_env, players_tp),
+        (multi_objective_lp_env, players_lp),
+    ]
+
+
+def _init_worker(starting_stack: int) -> None:
+    """Initialize each worker process with fresh environments."""
     global _global_envs_and_players
-    _global_envs_and_players = envs_and_players
+    _global_envs_and_players = _create_evaluation_environments(starting_stack)
 
 
 class ActionType(Enum):
@@ -913,82 +995,6 @@ def fitness_multi_objective(
 
 def main():
     starting_stack = int(1e12)
-    player_0_gp = PokerPlayer(
-        poker_agent=AgentEvolutionaryMultiObjective(),
-        player_index=0,
-        stack=starting_stack,
-    )
-    player_1_gp = PokerPlayer(
-        poker_agent=AgentTightAggressive(), player_index=1, stack=starting_stack
-    )
-    player_2_gp = PokerPlayer(
-        poker_agent=AgentLooseAggressive(), player_index=2, stack=starting_stack
-    )
-    player_3_gp = PokerPlayer(
-        poker_agent=AgentTightPassive(), player_index=3, stack=starting_stack
-    )
-    player_4_gp = PokerPlayer(
-        poker_agent=AgentLoosePassive(), player_index=4, stack=starting_stack
-    )
-
-    players_gp = [player_0_gp, player_1_gp, player_2_gp, player_3_gp, player_4_gp]
-    multi_objective_gp_env = FixedLimitTexasHoldemEnvironment(players=players_gp)
-
-    player_0_tag = PokerPlayer(
-        poker_agent=AgentEvolutionaryMultiObjective(),
-        player_index=0,
-        stack=starting_stack,
-    )
-    player_1_tag = PokerPlayer(
-        poker_agent=AgentTightAggressive(), player_index=1, stack=starting_stack
-    )
-
-    players_tag = [player_0_tag, player_1_tag]
-    multi_objective_tag_env = FixedLimitTexasHoldemEnvironment(players=players_tag)
-
-    player_0_lag = PokerPlayer(
-        poker_agent=AgentEvolutionaryMultiObjective(),
-        player_index=0,
-        stack=starting_stack,
-    )
-    player_1_lag = PokerPlayer(
-        poker_agent=AgentLooseAggressive(), player_index=1, stack=starting_stack
-    )
-
-    players_lag = [player_0_lag, player_1_lag]
-    multi_objective_lag_env = FixedLimitTexasHoldemEnvironment(players=players_lag)
-
-    player_0_tp = PokerPlayer(
-        poker_agent=AgentEvolutionaryMultiObjective(),
-        player_index=0,
-        stack=starting_stack,
-    )
-    player_1_tp = PokerPlayer(
-        poker_agent=AgentTightPassive(), player_index=1, stack=starting_stack
-    )
-
-    players_tp = [player_0_tp, player_1_tp]
-    multi_objective_tp_env = FixedLimitTexasHoldemEnvironment(players=players_tp)
-
-    player_0_lp = PokerPlayer(
-        poker_agent=AgentEvolutionaryMultiObjective(),
-        player_index=0,
-        stack=starting_stack,
-    )
-    player_1_lp = PokerPlayer(
-        poker_agent=AgentLoosePassive(), player_index=1, stack=starting_stack
-    )
-
-    players_lp = [player_0_lp, player_1_lp]
-    multi_objective_lp_env = FixedLimitTexasHoldemEnvironment(players=players_lp)
-
-    envs_and_players = [
-        (multi_objective_gp_env, players_gp),
-        (multi_objective_tag_env, players_tag),
-        (multi_objective_lag_env, players_lag),
-        (multi_objective_tp_env, players_tp),
-        (multi_objective_lp_env, players_lp),
-    ]
 
     # ## Configure Evolutionary Algorithm for Multi-Objective Learning
 
@@ -1002,9 +1008,10 @@ def main():
     toolbox.register("attr_float", random.gauss, 0.0, 1.0)
 
     # Should be 13 * 3 + 3 = 42 for our chromosome size
+    # Need to create a temporary agent instance to get the feature count
+    temp_agent = AgentEvolutionaryMultiObjective()
     chromosome_size = (
-        player_0_gp.poker_agent.N_FEATURES * player_0_gp.poker_agent.N_ACTIONS
-        + player_0_gp.poker_agent.N_ACTIONS
+        temp_agent.N_FEATURES * temp_agent.N_ACTIONS + temp_agent.N_ACTIONS
     )
     assert chromosome_size == 42, f"Expected chromosome size 42, got {chromosome_size}"
 
@@ -1040,10 +1047,10 @@ def main():
     toolbox.register("select", tools.selNSGA2)
 
     # use multiprocessing - doesn't work in notebooks
-    pool = Pool(initializer=_init_worker, initargs=(envs_and_players,))
+    pool = Pool(initializer=_init_worker, initargs=(starting_stack,))
     toolbox.register("map", pool.map)
 
-    POPULATION_SIZE = 4.0  # 100
+    POPULATION_SIZE = 4  # 100
     NUM_GENERATIONS = 5  # 50
     CROSSOVER_PROBABILITY = 0.50
     MUTATION_PROBABILITY = 0.3
@@ -1068,7 +1075,7 @@ def main():
 
     # Evaluate each individual in the initial population
     not_evaluated = [individual for individual in pop if not individual.fitness.valid]
-    fitnesses = map(toolbox.evaluate, not_evaluated)
+    fitnesses = toolbox.map(toolbox.evaluate, not_evaluated)
     for individual, fitness in zip(not_evaluated, fitnesses):
         individual.fitness.values = fitness
 
