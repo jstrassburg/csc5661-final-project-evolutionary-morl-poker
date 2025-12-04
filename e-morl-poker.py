@@ -1053,8 +1053,8 @@ def main():
     pool = Pool(initializer=_init_worker, initargs=(starting_stack,))
     toolbox.register("map", pool.map)
 
-    POPULATION_SIZE = 4  # 100
-    NUM_GENERATIONS = 5  # 50
+    POPULATION_SIZE = 100
+    NUM_GENERATIONS = 50
     CROSSOVER_PROBABILITY = 0.50
     MUTATION_PROBABILITY = 0.3
 
