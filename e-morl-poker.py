@@ -991,7 +991,8 @@ def fitness_multi_objective(
                 actions_taken=[[] for _ in players],  # No need to track actions here
                 θ=θ,
             )
-            total_reward[i] = rewards[0]  # Reward for the evolutionary agent
+            # Accumulate reward for the evolutionary agent
+            total_reward[i] += rewards[0]
     average_reward = tuple(total_reward / num_hands)
     return average_reward
 
